@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDetection } from './useDetection';
+import { NonRecoursBanner } from '@/ui/NonRecoursBanner';
 import type { Determinant, ResultatDetection, Verdict } from '@/engine/model';
 
 const DETERMINANTS: { id: Determinant | 'tous'; label: string }[] = [
@@ -36,6 +37,7 @@ export function Step4Detection() {
   return (
     <div>
       <h2 className="mb-2 text-xl font-bold">Étape 4 — Détection locale automatique</h2>
+      <NonRecoursBanner res={res} />
       <div className="mb-4 flex flex-wrap gap-2">
         {DETERMINANTS.map((dd) => (
           <button key={dd.id} onClick={() => setFiltre(dd.id)}

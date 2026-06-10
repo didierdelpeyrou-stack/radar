@@ -1,16 +1,17 @@
-// État du wizard : consentement, urgences, diagnostic (7 blocs), simulation MDS,
-// plan d'action. Autosave local (IndexedDB/localStorage — wifi instable des
-// permanences, §5). Mode SESSION ÉPHÉMÈRE : si la personne refuse le recueil
-// (case 1), rien n'est persisté (§ étape 1).
+// État du wizard pour UN dossier : consentement, urgences, diagnostic (7 blocs),
+// simulation MDS, plan d'action. La persistance est déléguée au store des dossiers
+// (autosave) — sauf en MODE SESSION ÉPHÉMÈRE (case 1 du consentement refusée),
+// où l'état ne vit qu'en mémoire (§ étape 1).
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Diagnostic } from '@/domain/types';
+import { getDossier, majWizard } from '@/lib/dossiers';
 
 export interface PlanItem {
   dispositif_id: string;
   nom: string;
   priorite: number;
-  souhaite_engager: boolean; // jamais pré-coché (§10 « la personne décide »)
+  souhaite_engager: boolean;
   qui_fait_quoi: string;
   echeance: string;
   statut: 'EC' | 'OK' | 'REF' | 'RC' | 'ATT';
@@ -25,7 +26,7 @@ export interface SimItem {
 export interface WizardState {
   draftId: string;
   ephemere: boolean;
-  etape: number; // 1..5
+  etape: number;
   consentement: { accompagnement: boolean; mesure_impact: boolean; mode: 'oral_confirme' | 'signe_ecran' };
   mode_contact: string;
   besoin_linguistique: 'autonome' | 'avec_appui' | 'interprete';
@@ -38,15 +39,15 @@ export interface WizardState {
 }
 
 export const URGENCES = [
-  { id: 'hebergement', label: 'Rupture d’hébergement < 7 jours', conduite: 'Appeler le 115. Mettre l’abri à l’abri d’abord.' },
-  { id: 'energie', label: 'Coupure d’énergie imminente', conduite: 'FSL Énergie Curative en urgence + fournisseur.' },
-  { id: 'expulsion', label: 'Expulsion engagée', conduite: 'FSL Habitat + DALO + accompagnement juridique.' },
-  { id: 'violences', label: 'Violences révélées', conduite: '3919 (femmes) / 116 006 (France Victimes). Ne jamais renvoyer vers le domicile dangereux.' },
+  { id: 'hebergement', label: 'Rupture d’hébergement < 7 jours', conduite: 'Appeler le 115. Mettre la personne à l’abri d’abord.' },
+  { id: 'energie', label: 'Coupure d’énergie imminente', conduite: 'FSL Énergie Curative en urgence + contact fournisseur.' },
+  { id: 'expulsion', label: 'Expulsion engagée', conduite: 'FSL Habitat + recours DALO + accompagnement juridique.' },
+  { id: 'violences', label: 'Violences révélées', conduite: '3919 (femmes) / 116 006 (France Victimes). Ne jamais renvoyer vers un domicile dangereux.' },
   { id: 'enfance', label: 'Mineur en danger', conduite: 'Appeler le 119.' },
   { id: 'psy', label: 'Détresse psychique', conduite: '3114. AERER. Ne jamais laisser repartir une personne suicidaire sans solution pour les prochaines heures.' },
 ];
 
-function diagnosticVide(): Diagnostic {
+export function diagnosticVide(): Diagnostic {
   return {
     bloc1: { vie: 'seul', matrimonial: 'celibataire', enfants: [] },
     bloc2: { nationalite: 'fr', en_france_depuis: '', a_paris_depuis: '', paris_3ans_sur_5: false },
@@ -58,9 +59,9 @@ function diagnosticVide(): Diagnostic {
   };
 }
 
-function etatInitial(): WizardState {
+export function etatInitialWizard(): WizardState {
   return {
-    draftId: `draft-${Math.floor(Date.now() / 1000)}`,
+    draftId: `diag-${Math.floor(Date.now() / 1000)}`,
     ephemere: false,
     etape: 1,
     consentement: { accompagnement: false, mesure_impact: false, mode: 'oral_confirme' },
@@ -75,53 +76,31 @@ function etatInitial(): WizardState {
   };
 }
 
-const CLE = 'radar:draft';
-
 interface Ctx {
+  dossierId: string;
   state: WizardState;
   set: (patch: Partial<WizardState>) => void;
   setBloc: <K extends keyof Diagnostic>(bloc: K, value: Diagnostic[K]) => void;
-  reset: () => void;
 }
 
 const WizardContext = createContext<Ctx | null>(null);
 
-export function WizardProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<WizardState>(() => {
-    try {
-      const raw = localStorage.getItem(CLE);
-      if (raw) return { ...etatInitial(), ...JSON.parse(raw) };
-    } catch {
-      /* stockage indisponible — on continue en mémoire */
-    }
-    return etatInitial();
-  });
+export function WizardProvider({ dossierId, children }: { dossierId: string; children: ReactNode }) {
+  const [state, setState] = useState<WizardState>(
+    () => getDossier(dossierId)?.wizard ?? etatInitialWizard(),
+  );
 
-  // Autosave — sauf en mode éphémère (consentement case 1 refusé).
+  // Autosave (no-op si éphémère, géré par majWizard).
   useEffect(() => {
-    if (state.ephemere) {
-      localStorage.removeItem(CLE);
-      return;
-    }
-    try {
-      localStorage.setItem(CLE, JSON.stringify(state));
-    } catch {
-      /* ignore */
-    }
-  }, [state]);
+    majWizard(dossierId, state);
+  }, [dossierId, state]);
 
   const set = (patch: Partial<WizardState>) => setState((s) => ({ ...s, ...patch }));
   const setBloc = <K extends keyof Diagnostic>(bloc: K, value: Diagnostic[K]) =>
     setState((s) => ({ ...s, diagnostic: { ...s.diagnostic, [bloc]: value } }));
-  const reset = () => {
-    localStorage.removeItem(CLE);
-    setState(etatInitial());
-  };
 
   return (
-    <WizardContext.Provider value={{ state, set, setBloc, reset }}>
-      {children}
-    </WizardContext.Provider>
+    <WizardContext.Provider value={{ dossierId, state, set, setBloc }}>{children}</WizardContext.Provider>
   );
 }
 

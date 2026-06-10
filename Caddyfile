@@ -1,0 +1,29 @@
+# Reverse proxy + TLS Let's Encrypt automatique pour RADAR.
+radar.h-ia.fr {
+	root * /srv
+	encode zstd gzip
+
+	# Fallback SPA (HashRouter : tout sert index.html).
+	try_files {path} /index.html
+	file_server
+
+	# En-têtes de sécurité (données de santé — §4).
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	# Proxy API → Supabase self-hosted H/IA (Kong/PostgREST sur le réseau interne).
+	handle_path /rest/* {
+		reverse_proxy supabase-kong:8000
+	}
+	handle_path /auth/* {
+		reverse_proxy supabase-kong:8000
+	}
+	handle_path /storage/* {
+		reverse_proxy supabase-kong:8000
+	}
+}

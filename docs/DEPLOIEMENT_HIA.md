@@ -16,7 +16,20 @@ UE exclusive**, réversibilité).
                                       Postgres 16 · GoTrue · PostgREST · Storage · pg_cron
 ```
 
-## Étapes
+## Mise en ligne en une commande (sur le VPS H/IA)
+
+```bash
+git clone <repo> radar && cd radar
+cp .env.example .env          # renseigner VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY
+docker compose up -d --build  # Caddy obtient le certificat TLS pour radar.h-ia.fr
+```
+
+Le DNS de `radar.h-ia.fr` doit pointer vers le VPS (A/AAAA) et les ports 80/443
+être ouverts pour que Let's Encrypt délivre le certificat. Le site est alors servi
+sur **https://radar.h-ia.fr**. (Tant que la stack Supabase n'est pas jointe, l'app
+fonctionne en mode local-first dans le navigateur.)
+
+## Étapes détaillées
 
 1. **Supabase self-hosted** : partir de la stack Docker officielle
    (`supabase/docker`). Renseigner `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`,

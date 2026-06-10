@@ -38,11 +38,31 @@
 - [x] **PDF « Fiche récapitulative »** (`@react-pdf/renderer`, terminologie exacte,
       chargé à la demande) — `src/pdf/FicheRecapitulative.tsx`.
 
-## ⏳ Reste du MVP (sprint 1-2)
+## ✅ Sprint 3 — application complète, nudges, PWA, déploiement (livré, build vert)
 
-- [ ] Auth Supabase + 4 rôles (admin/cad/ep/invite) + garde RLS côté client +
-      persistance réelle des dossiers (aujourd'hui : brouillon local).
-- [ ] Export JSON / suppression dossier (double confirmation admin) ; page Mentions & registre.
+- [x] **Session + 4 rôles** (admin/cad/ep/invite) avec droits dérivés et écran de
+      connexion ; `invite` borné à la détection flash (§1). Bascule Supabase Auth =
+      cette seule couche.
+- [x] **Persistance réelle des dossiers** (store local-first réactif) : liste,
+      création, ouverture, clôture (motif + synthèse), **export JSON**, **suppression**
+      (réservée admin, double confirmation) — RGPD §4.
+- [x] **Tous les écrans** (§7) : connexion, tableau de bord accompagnant (alertes
+      titre < 4 mois + rappels saisonniers), wizard, vue détection, plan d'action,
+      dossier, mode tiers-lieu, dashboard impact (anonymisé), admin référentiels
+      (alertes fraîcheur > 12 mois), page urgences plein écran, mentions & registre.
+- [x] **Nudges anti-non-recours éthiques** (`src/lib/nudges.ts`) : chiffrage du
+      montant annuel détecté non perçu (bannière), tri par impact, anti-surcharge,
+      PJ pré-listées, repère Odenore — **sans scoring, sans case pré-cochée** (§10).
+- [x] **PWA** installable + offline (vite-plugin-pwa, service worker, manifest).
+- [x] **Déploiement** : Dockerfile + Caddyfile (TLS auto `radar.h-ia.fr`) +
+      docker-compose (`docker compose up -d --build`).
+
+## ⏳ Branchement production (avant go-live réel)
+
+- [ ] Connecter Supabase self-hosted H/IA : remplacer le store local-first par les
+      appels PostgREST/Auth (les tables + RLS + seed existent déjà). Migration
+      transparente : mêmes types, mêmes rôles.
+- [ ] Tests Playwright du parcours 5 étapes.
 
 ## V1 (sprint 3-4)
 

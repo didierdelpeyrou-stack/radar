@@ -1,0 +1,33 @@
+# Déploiement RADAR sur l'infrastructure H/IA.
+#   docker compose up -d --build
+# Le frontend (Caddy + TLS Let's Encrypt) sert radar.h-ia.fr et proxifie /rest,
+# /auth, /storage vers la stack Supabase self-hosted (réseau Docker partagé).
+# La stack Supabase officielle (postgres + auth + rest + storage + kong + pg_cron)
+# se lance séparément via supabase/docker et rejoint le réseau `radar`.
+
+services:
+  radar-web:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-https://radar.h-ia.fr}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    container_name: radar-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - radar
+
+networks:
+  radar:
+    name: radar
+    external: false
+
+volumes:
+  caddy_data:
+  caddy_config:

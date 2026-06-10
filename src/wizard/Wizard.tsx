@@ -8,7 +8,7 @@ import { Step5PlanAction } from './Step5PlanAction';
 const ETAPES = ['Accueil', 'Diagnostic', 'Simulation', 'Détection', 'Plan d’action'];
 
 export function Wizard() {
-  const { state, set, reset } = useWizard();
+  const { state, set } = useWizard();
   const e = state.etape;
 
   return (
@@ -41,7 +41,6 @@ export function Wizard() {
       <div className="mt-4 flex items-center justify-between">
         <button disabled={e === 1} onClick={() => set({ etape: e - 1 })}
           className="rounded-lg border border-marine/30 px-4 py-2 disabled:opacity-40">← Précédent</button>
-        <button onClick={reset} className="text-sm text-corail underline">Nouveau dossier (effacer)</button>
         <button disabled={e === 5} onClick={() => set({ etape: e + 1 })}
           className="rounded-lg bg-teal px-4 py-2 text-white disabled:opacity-40">Suivant →</button>
       </div>

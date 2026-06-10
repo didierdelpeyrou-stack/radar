@@ -4,6 +4,7 @@ import { useDetection } from './useDetection';
 import { trierPlan } from './priorite';
 import { piecesPour } from './pjMap';
 import { EncadreBleu, EncadreVigilance, Bascule } from '@/ui/fields';
+import { NonRecoursBanner } from '@/ui/NonRecoursBanner';
 
 export function Step5PlanAction() {
   const { state } = useWizard();
@@ -33,6 +34,7 @@ export function Step5PlanAction() {
   return (
     <div>
       <h2 className="mb-2 text-xl font-bold">Étape 5 — Restitution & plan d’action</h2>
+      <NonRecoursBanner res={res} />
       <EncadreVigilance>
         Estimation indicative — seules les administrations ouvrent les droits.
         <strong> C’est la personne qui choisit</strong> ce qu’elle engage (rien n’est pré-coché).
