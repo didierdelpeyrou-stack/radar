@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useWizard, URGENCES } from './store';
-import { ACCOMPAGNEMENTS } from '@/domain/accompagnements';
 import { ContactReferent } from '@/ui/ContactReferent';
 import { Champ, Selecteur, TexteInput, NombreInput, Bascule, EncadreBleu, EncadreVigilance } from '@/ui/fields';
 
@@ -122,31 +121,6 @@ export function Step1Accueil() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <Champ
-          label="Niveau d’accompagnement"
-          pourquoi="Palette des accompagnements (scénario 2 — accueil transversal). Orienter selon le niveau requis protège aussi l’écrivain public, dont le rôle n’est pas de se substituer à un travailleur social."
-        >
-          {() => {
-            const a = ACCOMPAGNEMENTS.find((x) => x.value === state.mode_contact);
-            return (
-              <>
-                <Selecteur
-                  value={state.mode_contact}
-                  onChange={(mode_contact) => set({ mode_contact })}
-                  options={ACCOMPAGNEMENTS.map((x) => ({ value: x.value, label: x.label }))}
-                />
-                {a && (
-                  <div className="mt-2 rounded-lg border-l-4 border-teal bg-lave-bleu p-3 text-sm">
-                    <div>{a.ce_que_cest}</div>
-                    <div className="mt-1 text-marine/60">
-                      <strong>Qui :</strong> {a.qui}
-                    </div>
-                  </div>
-                )}
-              </>
-            );
-          }}
-        </Champ>
         <Champ
           label="Besoin linguistique"
           pourquoi="Ne JAMAIS utiliser un enfant comme interprète. Mobiliser un interprète professionnel si besoin."
