@@ -7,6 +7,7 @@ import { detecter } from '@/engine/engine';
 import { DISPOSITIFS } from '@/domain/catalogue';
 import { syntheseNonRecours, euros } from '@/lib/nudges';
 import { moisAvantExpirationTitre } from '@/wizard/calculs';
+import { aujourdHui } from '@/lib/dates';
 import { EncadreVigilance, EncadreBleu } from '@/ui/fields';
 
 const MOIS = new Date().getMonth(); // 0=jan
@@ -26,13 +27,13 @@ export function Dashboard() {
   const alertesTitre: { ref: string; mois: number; id: string }[] = [];
   for (const d of actifs) {
     try {
-      const profil = construireProfil(d.wizard.diagnostic, { asOf: '2026-06-10', ageDemandeur: d.wizard.ageDemandeur || undefined });
+      const profil = construireProfil(d.wizard.diagnostic, { asOf: aujourdHui(), ageDemandeur: d.wizard.ageDemandeur || undefined });
       const res = detecter(DISPOSITIFS, profil);
       totalNonRecours += syntheseNonRecours(res).totalAnnuel;
     } catch {
       /* dossier incomplet */
     }
-    const m = moisAvantExpirationTitre(d.wizard.diagnostic, '2026-06-10');
+    const m = moisAvantExpirationTitre(d.wizard.diagnostic, aujourdHui());
     if (m !== null && m < 4) alertesTitre.push({ ref: d.ref, mois: m, id: d.id });
   }
 
@@ -54,7 +55,7 @@ export function Dashboard() {
 
       {totalNonRecours > 0 && (
         <EncadreBleu>
-          Sur vos dossiers ouverts, <strong>≈ {euros(totalNonRecours)}/an</strong> de droits ont été
+          Sur vos dossiers ouverts, <strong>jusqu’à {euros(totalNonRecours)}/an</strong> de droits ont été
           détectés et restent à activer. Chaque démarche engagée, c’est du non-recours en moins.
         </EncadreBleu>
       )}
@@ -76,7 +77,7 @@ export function Dashboard() {
           {actifs.map((d) => {
             let total = 0;
             try {
-              const profil = construireProfil(d.wizard.diagnostic, { asOf: '2026-06-10', ageDemandeur: d.wizard.ageDemandeur || undefined });
+              const profil = construireProfil(d.wizard.diagnostic, { asOf: aujourdHui(), ageDemandeur: d.wizard.ageDemandeur || undefined });
               total = syntheseNonRecours(detecter(DISPOSITIFS, profil)).totalAnnuel;
             } catch { /* */ }
             return (
@@ -86,10 +87,17 @@ export function Dashboard() {
                     <span className="font-bold">{d.ref}</span>
                     <span className="text-sm text-marine/50">étape {d.wizard.etape}/5</span>
                   </div>
-                  <div className="text-sm text-marine/70">
-                    {d.wizard.diagnostic.bloc1.vie}, {d.wizard.diagnostic.bloc1.enfants.length} enfant(s) · diagnostic
+                  <div className="flex items-center gap-2 text-sm text-marine/70">
+                    <span>{d.wizard.diagnostic.bloc1.vie}, {d.wizard.diagnostic.bloc1.enfants.length} enfant(s)</span>
+                    {d.origine === 'flash' ? (
+                      <span className="rounded bg-lave-dore px-1.5 py-0.5 text-xs font-semibold text-marine">
+                        flash accueil
+                      </span>
+                    ) : (
+                      <span>· diagnostic</span>
+                    )}
                   </div>
-                  {total > 0 && <div className="mt-1 text-sm font-semibold text-teal">≈ {euros(total)}/an à activer</div>}
+                  {total > 0 && <div className="mt-1 text-sm font-semibold text-teal">jusqu’à {euros(total)}/an à activer</div>}
                 </button>
               </li>
             );

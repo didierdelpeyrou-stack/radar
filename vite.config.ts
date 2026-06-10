@@ -25,6 +25,13 @@ export default defineConfig({
     }),
   ],
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+  server: {
+    // Dev : proxy de l'API IA souveraine (évite le CORS — en prod le front est
+    // same-origin derrière Caddy, qui route /api/* vers hia-sim-backend).
+    proxy: {
+      '/api': { target: 'https://radar.h-ia.fr', changeOrigin: true },
+    },
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],

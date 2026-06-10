@@ -5,6 +5,7 @@ import { Wizard } from '@/wizard/Wizard';
 import { getDossier, majDossier, supprimerDossier } from '@/lib/dossiers';
 import { useSession } from '@/lib/session';
 import { EncadreBleu } from '@/ui/fields';
+import { ResumeFALC } from '@/ui/ResumeFALC';
 
 const MOTIFS = [
   ['sortie_autonomie', 'Sortie vers autonomie'],
@@ -79,6 +80,8 @@ export function DossierScreen() {
       <WizardProvider dossierId={dossier.id}>
         <Wizard />
       </WizardProvider>
+
+      <ResumeFALC dossier={dossier} />
     </div>
   );
 }

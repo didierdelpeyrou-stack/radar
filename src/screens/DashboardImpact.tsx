@@ -5,6 +5,7 @@ import { detecter } from '@/engine/engine';
 import { DISPOSITIFS } from '@/domain/catalogue';
 import { BILAN_BI1 } from '@/domain/bilan';
 import { syntheseNonRecours, euros } from '@/lib/nudges';
+import { aujourdHui } from '@/lib/dates';
 
 function Stat({ label, valeur, accent }: { label: string; valeur: string; accent?: boolean }) {
   return (
@@ -105,7 +106,12 @@ function BilanTerrain() {
 
 export function DashboardImpact() {
   const dossiers = useDossiers();
-  const actifs = dossiers.filter((d) => d.statut === 'actif');
+  // Verrou J+2 n°4 (concertation 11/06/2026) : seuls les dossiers dont la personne
+  // a accepté la case 2 du consentement (mesure d'impact) alimentent les agrégats.
+  // Un refus de la case 2 exclut le dossier des indicateurs, même anonymisés.
+  const consentis = dossiers.filter((d) => d.wizard.consentement.mesure_impact);
+  const actifs = consentis.filter((d) => d.statut === 'actif');
+  const exclus = dossiers.filter((d) => !d.wizard.consentement.mesure_impact).length;
 
   let totalNonRecours = 0;
   let eligibles = 0;
@@ -113,26 +119,29 @@ export function DashboardImpact() {
   for (const d of actifs) {
     parProfil[d.profil_type || 'non_renseigné'] = (parProfil[d.profil_type || 'non_renseigné'] || 0) + 1;
     try {
-      const res = detecter(DISPOSITIFS, construireProfil(d.wizard.diagnostic, { asOf: '2026-06-10', ageDemandeur: d.wizard.ageDemandeur || undefined }));
+      const res = detecter(DISPOSITIFS, construireProfil(d.wizard.diagnostic, { asOf: aujourdHui(), ageDemandeur: d.wizard.ageDemandeur || undefined }));
       const s = syntheseNonRecours(res);
       totalNonRecours += s.totalAnnuel;
       eligibles += s.nbEligibles;
     } catch { /* */ }
   }
-  const clos = dossiers.filter((d) => d.statut === 'clos').length;
+  const clos = consentis.filter((d) => d.statut === 'clos').length;
 
   return (
     <div>
       <h1 className="mb-1 text-2xl font-bold">Dashboard impact</h1>
       <p className="mb-5 text-sm text-marine/60">
         Indicateurs <strong>anonymisés</strong> (aucun identifiant) — compatibles reporting FSU / im-prove / Optimy.
+        {exclus > 0 && (
+          <> {exclus} dossier(s) exclu(s) des indicateurs (consentement « mesure d’impact » non donné).</>
+        )}
       </p>
 
       <h2 className="mb-2 font-bold">Indicateurs en temps réel — cet outil</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="File active (dossiers ouverts)" valeur={String(actifs.length)} />
         <Stat label="Droits détectés à activer" valeur={String(eligibles)} />
-        <Stat label="Montant annualisé détecté" valeur={euros(totalNonRecours)} accent />
+        <Stat label="Montant annualisé détecté (au maximum)" valeur={euros(totalNonRecours)} accent />
         <Stat label="Dossiers clôturés" valeur={String(clos)} />
       </div>
 

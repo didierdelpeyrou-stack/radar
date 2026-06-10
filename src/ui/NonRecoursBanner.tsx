@@ -14,9 +14,12 @@ export function NonRecoursBanner({ res }: { res: ResultatDetection[] }) {
             Droits détectés, non encore demandés
           </div>
           <div className="text-4xl font-bold leading-tight">
-            {s.totalAnnuel > 0 ? `≈ ${euros(s.totalAnnuel)}/an` : `${s.nbEligibles} droit(s)`}
+            {s.totalAnnuel > 0
+              ? `${s.estMaximum ? 'jusqu’à ' : '≈ '}${euros(s.totalAnnuel)}/an`
+              : `${s.nbEligibles} droit(s)`}
           </div>
           <div className="mt-1 text-sm text-white/80">
+            {s.estMaximum ? 'Montant au maximum — certains droits sont des compléments calculés selon les ressources. ' : ''}
             {s.nbEligibles} aide(s) éligible(s){s.nbChiffres < s.nbEligibles ? ` · ${s.nbEligibles - s.nbChiffres} non chiffrable(s) ici` : ''}
             {s.nbAVerifier > 0 ? ` · ${s.nbAVerifier} à vérifier` : ''}
           </div>

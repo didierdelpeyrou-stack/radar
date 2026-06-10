@@ -12,6 +12,7 @@ import { detecter } from '@/engine/engine';
 import { DISPOSITIFS } from '@/domain/catalogue';
 import { NonRecoursBanner } from '@/ui/NonRecoursBanner';
 import { Champ, Selecteur, NombreInput, Bascule, EncadreBleu, EncadreVigilance } from '@/ui/fields';
+import { aujourdHui } from '@/lib/dates';
 import type { Diagnostic } from '@/domain/types';
 
 const PERCUES = [
@@ -25,11 +26,16 @@ export function SimulationFlash() {
   const [age, setAge] = useState(0);
   const [diag, setDiag] = useState<Diagnostic>(() => diagnosticVide());
   const [ages, setAges] = useState<number[]>([]);
+  const [revenu, setRevenu] = useState(0);
+  const [statutRevenu, setStatutRevenu] = useState<'salarie' | 'retraite' | 'autre'>('salarie');
   const [cree, setCree] = useState<{ ref: string; id: string } | null>(null);
 
   // RDV
   const [quand, setQuand] = useState('');
   const [cad, setCad] = useState('');
+  // Verrou J+2 n°1 (concertation 11/06/2026) : AUCUN dossier nominatif n'est créé
+  // sans recueil explicite du consentement, même à l'accueil. Recueil oral confirmé.
+  const [consentement, setConsentement] = useState(false);
   const cads = listeCad();
 
   const set = (patch: Partial<Diagnostic>) => setDiag((d) => ({ ...d, ...patch }));
@@ -42,19 +48,33 @@ export function SimulationFlash() {
         ...diag.bloc1,
         enfants: ages.map((a) => ({ age: a, scolarise_france: true, garde_alternee: false, reste_au_pays: false, handicap: false })),
       },
+      // Le revenu est routé selon son type : seul un salaire d'activité ouvre la
+      // Prime d'activité. Une retraite/pension compte dans les ressources sans la
+      // déclencher (évite un faux positif pour les personnes âgées).
+      bloc5: {
+        ...diag.bloc5,
+        salaire_net: statutRevenu === 'salarie' ? revenu : 0,
+        retraites_total: statutRevenu === 'retraite' ? revenu : 0,
+        pensions_total: statutRevenu === 'autre' ? revenu : 0,
+      },
     }),
-    [diag, ages],
+    [diag, ages, revenu, statutRevenu],
   );
 
   const res = useMemo(
-    () => detecter(DISPOSITIFS, construireProfil(diagAvecEnfants, { asOf: '2026-06-11', ageDemandeur: age || undefined })),
+    () => detecter(DISPOSITIFS, construireProfil(diagAvecEnfants, { asOf: aujourdHui(), ageDemandeur: age || undefined })),
     [diagAvecEnfants, age],
   );
   const eligibles = res.filter((r) => r.verdict === 'eligible_probable');
   const aVerifier = res.filter((r) => r.verdict === 'a_verifier');
 
   function prendreRdv() {
+    if (!consentement) return;
     const w = etatInitialWizard();
+    // Le consentement vient d'être recueilli oralement : le dossier peut être
+    // persisté (ephemere=false) et transmis au CAD.
+    w.consentement = { ...w.consentement, accompagnement: true, mode: 'oral_confirme' };
+    w.ephemere = false;
     w.diagnostic = diagAvecEnfants;
     w.ageDemandeur = age;
     w.mode_contact = 'accueil';
@@ -73,7 +93,7 @@ export function SimulationFlash() {
   }
 
   function recommencer() {
-    setAge(0); setDiag(diagnosticVide()); setAges([]); setQuand(''); setCad(''); setCree(null);
+    setAge(0); setDiag(diagnosticVide()); setAges([]); setQuand(''); setCad(''); setCree(null); setConsentement(false);
   }
 
   if (cree) {
@@ -163,8 +183,21 @@ export function SimulationFlash() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Champ label="Ressources du foyer">
-              {() => <NombreInput value={diag.bloc5.salaire_net} onChange={(salaire_net) => set({ bloc5: { ...diag.bloc5, salaire_net } })} suffix="€/mois" />}
+            <Champ label="Ressources du foyer (par mois)">
+              {() => (
+                <div className="flex flex-col gap-2">
+                  <Selecteur
+                    value={statutRevenu}
+                    onChange={setStatutRevenu}
+                    options={[
+                      { value: 'salarie', label: 'Salaire (activité)' },
+                      { value: 'retraite', label: 'Retraite / pension' },
+                      { value: 'autre', label: 'Autre (RSA, allocations…)' },
+                    ]}
+                  />
+                  <NombreInput value={revenu} onChange={setRevenu} suffix="€/mois" />
+                </div>
+              )}
             </Champ>
             <Champ label="Couverture maladie">
               {() => (
@@ -219,8 +252,14 @@ export function SimulationFlash() {
                 </div>
               )}
             </Champ>
+            <Bascule
+              label="La personne accepte (à l’oral) que ses informations soient enregistrées et transmises au CAD pour son accompagnement."
+              checked={consentement} onChange={setConsentement} />
             {!quand && <EncadreVigilance>Choisir une date de RDV avant de transmettre au CAD.</EncadreVigilance>}
-            <button onClick={prendreRdv} disabled={!quand}
+            {quand && !consentement && (
+              <EncadreVigilance>Recueillir le consentement de la personne avant de créer le dossier.</EncadreVigilance>
+            )}
+            <button onClick={prendreRdv} disabled={!quand || !consentement}
               className="mt-2 w-full rounded-lg bg-corail px-4 py-3 font-semibold text-white disabled:opacity-40">
               Créer le dossier flash et le RDV CAD
             </button>

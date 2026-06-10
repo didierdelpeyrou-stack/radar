@@ -43,7 +43,13 @@ function charger(): Dossier[] {
 }
 function persister() {
   try {
-    localStorage.setItem(CLE, JSON.stringify(cache));
+    // Verrou J+2 n°1 (concertation 11/06/2026) : un dossier en mode éphémère
+    // (case 1 du consentement non cochée) ne touche JAMAIS le disque. Il vit en
+    // mémoire le temps de la session et disparaît au rechargement. Si la case 1
+    // est décochée après coup, le dossier est retiré du localStorage au prochain
+    // cycle de persistance.
+    const persistables = cache.filter((d) => !d.wizard.ephemere);
+    localStorage.setItem(CLE, JSON.stringify(persistables));
   } catch {
     /* ignore */
   }
@@ -97,7 +103,9 @@ export function majDossier(id: string, patch: Partial<Dossier>) {
 
 export function majWizard(id: string, wizard: WizardState) {
   const d = getDossier(id);
-  if (!d || d.wizard.ephemere) return; // mode éphémère : pas de persistance
+  if (!d) return;
+  // Le cache mémoire est toujours à jour (navigation intra-session) ;
+  // persister() filtre les éphémères, donc rien n'atteint le disque sans la case 1.
   majDossier(id, { wizard });
 }
 

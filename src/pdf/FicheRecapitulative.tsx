@@ -20,11 +20,23 @@ const s = StyleSheet.create({
   banner: { backgroundColor: '#FCEBEA', padding: 6, marginVertical: 6, fontSize: 9 },
 });
 
-function Fiche({ state, res }: { state: WizardState; res: ResultatDetection[] }) {
+interface FicheProps {
+  state: WizardState;
+  res: ResultatDetection[];
+  prochainRdv?: string;
+  /** Résumé FALC rédigé par l'IA souveraine (Gemma, H/IA) et RELU par l'accompagnant.
+   *  Optionnel : la fiche se génère aussi bien sans IA. */
+  resumeFalc?: string;
+}
+
+function Fiche({ state, res, prochainRdv, resumeFalc }: FicheProps) {
   const d = state.diagnostic;
   const elig = trierPlan(res.filter((r) => r.verdict === 'eligible_probable'));
   const ordre = res.filter((r) => r.verdict === 'deja_percu');
   const non = res.filter((r) => r.verdict === 'non_eligible');
+  // Verrou J+2 n°2 : le PDF reflète les CHOIX de la personne (state.plan),
+  // pas seulement la liste brute des éligibilités.
+  const engages = state.plan.filter((p) => p.souhaite_engager);
 
   return (
     <Document>
@@ -36,6 +48,17 @@ function Fiche({ state, res }: { state: WizardState; res: ResultatDetection[] })
           <Text>Estimation indicative — les démarches restent à faire et seules les
             administrations ouvrent les droits. C’est votre fil rouge : gardez ce document.</Text>
         </View>
+
+        {resumeFalc && (
+          <>
+            <Text style={s.h2}>En résumé, avec des mots simples</Text>
+            <Text style={s.row}>{resumeFalc}</Text>
+            <Text style={s.note}>
+              Résumé rédigé avec l’aide d’une IA locale souveraine (serveur H/IA, France) et relu
+              par votre accompagnant·e. L’IA reformule : elle ne décide d’aucun droit.
+            </Text>
+          </>
+        )}
 
         <Text style={s.h2}>Consentement</Text>
         <Text style={s.row}>Accompagnement : {state.consentement.accompagnement ? 'oui' : 'non'} · Mesure d’impact : {state.consentement.mesure_impact ? 'oui' : 'non'} · Mode : {state.consentement.mode}</Text>
@@ -53,6 +76,24 @@ function Fiche({ state, res }: { state: WizardState; res: ResultatDetection[] })
           </Text>
         ))}
 
+        <Text style={s.h2}>Ce que vous avez choisi d’engager</Text>
+        {engages.length ? (
+          engages.map((p, i) => (
+            <Text key={p.dispositif_id} style={s.li}>
+              {i + 1}. {p.nom}
+              {p.qui_fait_quoi ? ` — ${p.qui_fait_quoi}` : ''}
+              {p.echeance ? ` (échéance : ${p.echeance})` : ''}
+            </Text>
+          ))
+        ) : (
+          <Text style={s.row}>Aucune démarche engagée pour l’instant — à décider ensemble au prochain rendez-vous.</Text>
+        )}
+        {prochainRdv && (
+          <Text style={s.row}>
+            Prochain rendez-vous de suivi : {new Date(prochainRdv).toLocaleString('fr-FR')}
+          </Text>
+        )}
+
         <Text style={s.h2}>Déjà en place</Text>
         {ordre.length ? ordre.map((r) => <Text key={r.dispositif_id} style={s.li}>• {r.nom}</Text>) : <Text style={s.row}>—</Text>}
 
@@ -69,8 +110,13 @@ function Fiche({ state, res }: { state: WizardState; res: ResultatDetection[] })
 }
 
 /** Génère le PDF et déclenche le téléchargement (côté navigateur). */
-export async function genererFichePdf(state: WizardState, res: ResultatDetection[]) {
-  const blob = await pdf(<Fiche state={state} res={res} />).toBlob();
+export async function genererFichePdf(
+  state: WizardState,
+  res: ResultatDetection[],
+  prochainRdv?: string,
+  resumeFalc?: string,
+) {
+  const blob = await pdf(<Fiche state={state} res={res} prochainRdv={prochainRdv} resumeFalc={resumeFalc} />).toBlob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

@@ -1,6 +1,7 @@
 import { DISPOSITIFS } from '@/domain/catalogue';
+import { aujourdHui } from '@/lib/dates';
 
-const ASOF = new Date('2026-06-10');
+const ASOF = new Date(aujourdHui());
 
 function moisDepuis(dateIso?: string): number | null {
   if (!dateIso) return null;

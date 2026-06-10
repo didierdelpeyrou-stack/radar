@@ -62,7 +62,10 @@ export function diagnosticVide(): Diagnostic {
 export function etatInitialWizard(): WizardState {
   return {
     draftId: `diag-${Math.floor(Date.now() / 1000)}`,
-    ephemere: false,
+    // Verrou J+2 n°1 : éphémère PAR DÉFAUT — rien n'est persisté tant que la
+    // case 1 du consentement (accompagnement) n'est pas cochée (Step1Accueil
+    // bascule ephemere à !accompagnement).
+    ephemere: true,
     etape: 1,
     consentement: { accompagnement: false, mesure_impact: false, mode: 'oral_confirme' },
     mode_contact: 'ecrivain_public',

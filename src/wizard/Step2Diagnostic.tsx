@@ -2,6 +2,7 @@ import { useWizard } from './store';
 import { Accordeon, BlocPliable } from '@/ui/Accordeon';
 import { Champ, Selecteur, NombreInput, Bascule, TexteInput, EncadreVigilance, EncadreBleu } from '@/ui/fields';
 import { tauxEffort, quotientFamilial, moisAvantExpirationTitre } from './calculs';
+import { aujourdHui } from '@/lib/dates';
 import type { Enfant } from '@/domain/types';
 
 const PERCUES_OPTS = [
@@ -14,7 +15,7 @@ export function Step2Diagnostic() {
   const d = state.diagnostic;
   const te = tauxEffort(d);
   const qf = quotientFamilial(d);
-  const moisTitre = moisAvantExpirationTitre(d, '2026-06-10');
+  const moisTitre = moisAvantExpirationTitre(d, aujourdHui());
 
   const enfants = d.bloc1.enfants;
   const setEnfant = (i: number, patch: Partial<Enfant>) =>

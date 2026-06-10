@@ -10,3 +10,7 @@ coverage/
 # Local / artefacts
 .claude/
 tsconfig.tsbuildinfo
+
+# Export Hermes (généré par `npm run hermes`)
+export-hermes/
+radar-hermes-*.tgz

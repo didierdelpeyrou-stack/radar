@@ -6,6 +6,7 @@ import { DISPOSITIFS } from '@/domain/catalogue';
 import type { ResultatDetection, Verdict } from '@/engine/model';
 import { PERSONAS } from '@/demo/personas';
 import { NonRecoursBanner } from '@/ui/NonRecoursBanner';
+import { aujourdHui } from '@/lib/dates';
 
 const COLONNES: { titre: string; verdicts: Verdict[]; classe: string; emoji: string }[] = [
   { titre: 'Ce qu’on peut demander en plus', verdicts: ['eligible_probable'], classe: 'border-teal bg-white', emoji: '✅' },
@@ -31,7 +32,7 @@ export function Demo() {
   const [persona, setPersona] = useState(0);
   const resultats = useMemo(() => {
     const p = PERSONAS[persona];
-    const profil = construireProfil(p.diagnostic as Diagnostic, { asOf: '2026-06-10', ageDemandeur: p.age });
+    const profil = construireProfil(p.diagnostic as Diagnostic, { asOf: aujourdHui(), ageDemandeur: p.age });
     return detecter(DISPOSITIFS, profil);
   }, [persona]);
 
