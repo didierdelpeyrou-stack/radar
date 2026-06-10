@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: system-ui, sans-serif;
+    color: #1b2443;
+  }
+  body {
+    margin: 0;
+    background: #edf0f5;
+  }
+  h1, h2, h3 {
+    font-family: '"DM Sans"', system-ui, sans-serif;
+  }
+}

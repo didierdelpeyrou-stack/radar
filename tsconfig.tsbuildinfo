@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/demo/personas.ts","./src/domain/catalogue.ts","./src/domain/pieces.ts","./src/domain/types.ts","./src/engine/engine.ts","./src/engine/model.ts","./src/engine/personas.test.ts","./src/engine/profil.ts","./scripts/generate-seed.ts"],"version":"5.9.3"}
