@@ -1,4 +1,5 @@
 import { useWizard } from './store';
+import { Accordeon, BlocPliable } from '@/ui/Accordeon';
 import { Champ, Selecteur, NombreInput, Bascule, TexteInput, EncadreVigilance, EncadreBleu } from '@/ui/fields';
 import { tauxEffort, quotientFamilial, moisAvantExpirationTitre } from './calculs';
 import type { Enfant } from '@/domain/types';
@@ -20,12 +21,17 @@ export function Step2Diagnostic() {
     setBloc('bloc1', { ...d.bloc1, enfants: enfants.map((e, j) => (j === i ? { ...e, ...patch } : e)) });
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-xl font-bold">Étape 2 — Diagnostic structuré (7 blocs)</h2>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold">Étape 2 — Diagnostic</h2>
+        <p className="mt-1 text-base text-marine/60">
+          Un thème à la fois. Avancez avec « Bloc suivant » au rythme de la personne — tout est enregistré au fur et à mesure.
+        </p>
+      </div>
 
+      <Accordeon total={7}>
       {/* BLOC 1 */}
-      <section>
-        <h3 className="mb-2 font-bold text-teal">1 · Composition du foyer</h3>
+      <BlocPliable n={0} titre="1 · Composition du foyer">
         <div className="grid gap-4 md:grid-cols-2">
           <Champ label="Vie">
             {() => (
@@ -57,11 +63,10 @@ export function Step2Diagnostic() {
             + Ajouter un enfant
           </button>
         </div>
-      </section>
+      </BlocPliable>
 
       {/* BLOC 2 */}
-      <section>
-        <h3 className="mb-2 font-bold text-teal">2 · Situation administrative</h3>
+      <BlocPliable n={1} titre="2 · Situation administrative">
         <div className="grid gap-4 md:grid-cols-2">
           <Champ label="Nationalité">
             {() => (
@@ -90,11 +95,10 @@ export function Step2Diagnostic() {
             Titre de séjour expirant dans {moisTitre} mois — <strong>préparer le renouvellement immédiatement</strong>.
           </EncadreVigilance>
         )}
-      </section>
+      </BlocPliable>
 
       {/* BLOC 3 */}
-      <section>
-        <h3 className="mb-2 font-bold text-teal">3 · Situation professionnelle</h3>
+      <BlocPliable n={2} titre="3 · Situation professionnelle">
         <div className="grid gap-4 md:grid-cols-2">
           <Champ label="Statut">
             {() => (
@@ -103,11 +107,10 @@ export function Step2Diagnostic() {
             )}
           </Champ>
         </div>
-      </section>
+      </BlocPliable>
 
       {/* BLOC 4 */}
-      <section>
-        <h3 className="mb-2 font-bold text-teal">4 · Logement</h3>
+      <BlocPliable n={3} titre="4 · Logement">
         <div className="grid gap-4 md:grid-cols-2">
           <Champ label="Statut">
             {() => (
@@ -137,11 +140,10 @@ export function Step2Diagnostic() {
             Taux d’effort : <strong>{Math.round(te)} %</strong> (seuil de référence : 30 % — prérequis Paris Logement).
           </EncadreBleu>
         )}
-      </section>
+      </BlocPliable>
 
       {/* BLOC 5 */}
-      <section>
-        <h3 className="mb-2 font-bold text-teal">5 · Ressources mensuelles nettes</h3>
+      <BlocPliable n={4} titre="5 · Ressources mensuelles nettes">
         <div className="grid gap-4 md:grid-cols-3">
           <Champ label="Salaires">{() => <NombreInput value={d.bloc5.salaire_net} onChange={(salaire_net) => setBloc('bloc5', { ...d.bloc5, salaire_net })} suffix="€" />}</Champ>
           <Champ label="Retraites">{() => <NombreInput value={d.bloc5.retraites_total ?? 0} onChange={(retraites_total) => setBloc('bloc5', { ...d.bloc5, retraites_total })} suffix="€" />}</Champ>
@@ -155,11 +157,10 @@ export function Step2Diagnostic() {
           ))}
         </div>
         <Bascule label="Chèque énergie reçu" checked={d.bloc5.cheque_energie_recu} onChange={(v) => setBloc('bloc5', { ...d.bloc5, cheque_energie_recu: v })} />
-      </section>
+      </BlocPliable>
 
       {/* BLOC 6 */}
-      <section>
-        <h3 className="mb-2 font-bold text-teal">6 · Avis d’imposition</h3>
+      <BlocPliable n={5} titre="6 · Avis d’imposition">
         <div className="grid gap-4 md:grid-cols-2">
           <Champ label="Revenu fiscal de référence (annuel)">{() => <NombreInput value={d.bloc6.rfr} onChange={(rfr) => setBloc('bloc6', { ...d.bloc6, rfr })} suffix="€" />}</Champ>
           <Champ label="Nombre de parts">{() => <NombreInput value={d.bloc6.parts} onChange={(parts) => setBloc('bloc6', { ...d.bloc6, parts })} step="0.5" />}</Champ>
@@ -168,11 +169,10 @@ export function Step2Diagnostic() {
         <Bascule label="Anomalie détectée (enfants, régime matrimonial, demi-part) → orienter Service des Impôts"
           checked={d.bloc6.anomalie_orientation_sip} onChange={(v) => setBloc('bloc6', { ...d.bloc6, anomalie_orientation_sip: v })} />
         {d.bloc6.anomalie_orientation_sip && <EncadreVigilance>Une rectification peut ouvrir rétroactivement plusieurs centaines d’euros par mois.</EncadreVigilance>}
-      </section>
+      </BlocPliable>
 
       {/* BLOC 7 */}
-      <section>
-        <h3 className="mb-2 font-bold text-teal">7 · Santé</h3>
+      <BlocPliable n={6} titre="7 · Santé">
         <div className="grid gap-4 md:grid-cols-2">
           <Champ label="Couverture maladie">
             {() => (
@@ -191,7 +191,8 @@ export function Step2Diagnostic() {
           <Bascule label="ALD" checked={d.bloc7.ald} onChange={(v) => setBloc('bloc7', { ...d.bloc7, ald: v })} />
           <Bascule label="Aidant familial" checked={d.bloc7.aidant} onChange={(v) => setBloc('bloc7', { ...d.bloc7, aidant: v })} />
         </div>
-      </section>
+      </BlocPliable>
+      </Accordeon>
     </div>
   );
 }

@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { useWizard, URGENCES } from './store';
+import { ACCOMPAGNEMENTS } from '@/domain/accompagnements';
+import { ContactReferent } from '@/ui/ContactReferent';
 import { Champ, Selecteur, TexteInput, NombreInput, Bascule, EncadreBleu, EncadreVigilance } from '@/ui/fields';
 
 const NUMEROS = [
@@ -9,38 +12,75 @@ const NUMEROS = [
 export function Step1Accueil() {
   const { state, set } = useWizard();
   const urgenceActive = Object.values(state.urgences).some(Boolean);
+  const [urgOuvert, setUrgOuvert] = useState<boolean>(() => urgenceActive);
 
   return (
     <div>
       <h2 className="mb-3 text-xl font-bold">Étape 1 — Accueil, urgences, consentement</h2>
 
-      <section className="mb-6 rounded-xl border border-corail bg-lave-corail p-4">
-        <h3 className="mb-2 font-bold text-corail">Urgences — à repérer en premier</h3>
-        <div className="mb-3 flex flex-wrap gap-2 text-sm">
-          {NUMEROS.map(([n, l]) => (
-            <span key={n} className="rounded bg-white px-2 py-1">
-              <strong>{n}</strong> · {l}
+      <section className="mb-6 overflow-hidden rounded-xl border border-marine/15">
+        <button
+          type="button"
+          onClick={() => setUrgOuvert((v) => !v)}
+          aria-expanded={urgOuvert}
+          className="flex w-full items-center gap-3 bg-white px-4 py-4 text-left hover:bg-lave-bleu"
+        >
+          <span
+            aria-hidden
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lave-dore text-xl"
+          >
+            🛟
+          </span>
+          <span className="flex-1">
+            <span className="block text-lg font-bold">Y a-t-il une urgence à traiter ?</span>
+            <span className="block text-sm text-marine/60">
+              À repérer en premier — cliquer pour ouvrir
             </span>
-          ))}
-        </div>
-        {URGENCES.map((u) => (
-          <div key={u.id}>
-            <Bascule
-              label={u.label}
-              checked={!!state.urgences[u.id]}
-              onChange={(v) => set({ urgences: { ...state.urgences, [u.id]: v } })}
-            />
-            {state.urgences[u.id] && (
-              <EncadreVigilance>
-                <strong>Conduite à tenir :</strong> {u.conduite}
-              </EncadreVigilance>
+          </span>
+          {urgenceActive && (
+            <span className="rounded-full bg-lave-dore px-3 py-1 text-sm font-semibold text-marine">
+              Urgence repérée
+            </span>
+          )}
+          <span aria-hidden className={`text-xl transition-transform ${urgOuvert ? 'rotate-180' : ''}`}>⌄</span>
+        </button>
+
+        {urgOuvert && (
+          <div className="space-y-3 border-t border-marine/10 bg-white p-4">
+            <ContactReferent />
+
+            <div className="flex flex-wrap gap-2 text-sm">
+              {NUMEROS.map(([n, l]) => (
+                <span key={n} className="rounded border border-marine/15 bg-lave-bleu px-2 py-1">
+                  <strong>{n}</strong> · {l}
+                </span>
+              ))}
+            </div>
+
+            <div>
+              <div className="mb-1 font-semibold">Cocher si la situation est présente :</div>
+              {URGENCES.map((u) => (
+                <div key={u.id}>
+                  <Bascule
+                    label={u.label}
+                    checked={!!state.urgences[u.id]}
+                    onChange={(v) => set({ urgences: { ...state.urgences, [u.id]: v } })}
+                  />
+                  {state.urgences[u.id] && (
+                    <EncadreVigilance>
+                      <strong>Conduite à tenir :</strong> {u.conduite}
+                    </EncadreVigilance>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {urgenceActive && (
+              <EncadreBleu>
+                Traiter l’urgence d’abord. Le diagnostic peut se poursuivre en mode « urgence traitée ».
+              </EncadreBleu>
             )}
           </div>
-        ))}
-        {urgenceActive && (
-          <EncadreBleu>
-            Traiter l’urgence d’abord. Le diagnostic peut se poursuivre en mode « urgence traitée ».
-          </EncadreBleu>
         )}
       </section>
 
@@ -82,18 +122,15 @@ export function Step1Accueil() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <Champ label="Mode de contact">
+        <Champ
+          label="Niveau d’accompagnement"
+          pourquoi="Palette des accompagnements (scénario 2 — accueil transversal). Orienter selon le niveau requis protège aussi l’écrivain public, dont le rôle n’est pas de se substituer à un travailleur social."
+        >
           {() => (
             <Selecteur
               value={state.mode_contact}
               onChange={(mode_contact) => set({ mode_contact })}
-              options={[
-                { value: 'permanence', label: 'Permanence' },
-                { value: 'rdv', label: 'RDV' },
-                { value: 'orientation', label: 'Orientation' },
-                { value: 'reorientation', label: 'Réorientation interne' },
-                { value: 'tiers_lieu', label: 'Tiers-lieu' },
-              ]}
+              options={ACCOMPAGNEMENTS.map((a) => ({ value: a.value, label: a.label }))}
             />
           )}
         </Champ>

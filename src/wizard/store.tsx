@@ -65,7 +65,7 @@ export function etatInitialWizard(): WizardState {
     ephemere: false,
     etape: 1,
     consentement: { accompagnement: false, mesure_impact: false, mode: 'oral_confirme' },
-    mode_contact: 'permanence',
+    mode_contact: 'ecrivain_public',
     besoin_linguistique: 'autonome',
     demande: '',
     ageDemandeur: 0,

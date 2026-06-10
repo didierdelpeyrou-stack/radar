@@ -4,7 +4,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-export type Role = 'admin' | 'cad' | 'ep' | 'invite';
+export type Role = 'admin' | 'cad' | 'ep' | 'accueil';
 
 export interface Session {
   nom: string;
@@ -14,8 +14,8 @@ export interface Session {
 export const ROLES: { value: Role; label: string; desc: string }[] = [
   { value: 'admin', label: 'Coordination / direction', desc: 'Tout : dossiers, impact, référentiels, utilisateurs' },
   { value: 'cad', label: 'Chargé·e d’accès aux droits', desc: 'Tous les dossiers, diagnostics, plans, clôture' },
-  { value: 'ep', label: 'Écrivain·e public', desc: 'Dossiers affectés + détection flash tiers-lieu' },
-  { value: 'invite', label: 'Stagiaire / service civique', desc: 'Détection flash uniquement (aucun dossier nominatif)' },
+  { value: 'ep', label: 'Écrivain·e public', desc: 'Dossiers affectés + diagnostics' },
+  { value: 'accueil', label: 'Accueil — première ligne', desc: 'Simulation flash 10 min + prise de RDV avec un CAD' },
 ];
 
 const CLE = 'radar:session';
@@ -67,6 +67,21 @@ export function peut(role: Role | undefined) {
     voirDossiers: role === 'admin' || role === 'cad' || role === 'ep',
     voirImpact: role === 'admin',
     editerReferentiels: role === 'admin',
-    detectionFlash: !!role, // tous
+    // Accueil (première ligne) : simulation flash + prise de RDV CAD, sans accès
+    // aux dossiers nominatifs. Les CAD/admin peuvent aussi lancer une simulation flash.
+    simulationFlash: role === 'accueil' || role === 'cad' || role === 'admin',
+    accueilSeul: role === 'accueil',
   };
+}
+
+/** Liste des CAD connus (pour la prise de RDV). En attendant l'annuaire Supabase,
+ *  on agrège les noms vus comme référents + quelques entrées par défaut. */
+export function listeCad(): string[] {
+  try {
+    const dossiers = JSON.parse(localStorage.getItem('radar:dossiers') || '[]') as { accompagnant?: string }[];
+    const noms = new Set<string>(dossiers.map((d) => d.accompagnant || '').filter(Boolean));
+    return [...noms].sort();
+  } catch {
+    return [];
+  }
 }

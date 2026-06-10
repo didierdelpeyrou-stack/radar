@@ -87,8 +87,7 @@ export function Dashboard() {
                     <span className="text-sm text-marine/50">étape {d.wizard.etape}/5</span>
                   </div>
                   <div className="text-sm text-marine/70">
-                    {d.wizard.diagnostic.bloc1.vie}, {d.wizard.diagnostic.bloc1.enfants.length} enfant(s) ·{' '}
-                    {d.origine === 'flash' ? 'détection flash' : 'diagnostic'}
+                    {d.wizard.diagnostic.bloc1.vie}, {d.wizard.diagnostic.bloc1.enfants.length} enfant(s) · diagnostic
                   </div>
                   {total > 0 && <div className="mt-1 text-sm font-semibold text-teal">≈ {euros(total)}/an à activer</div>}
                 </button>

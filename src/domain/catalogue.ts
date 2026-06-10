@@ -179,6 +179,26 @@ export const DISPOSITIFS: Dispositif[] = [
     },
   },
   {
+    id: 'paje_base',
+    nom: 'Allocation de base (PAJE)',
+    organisme: 'CAF',
+    niveau: 'national',
+    determinant: 'solidarite',
+    couvert_par_mds: true,
+    description:
+      'Enfant de moins de 3 ans, sous condition de ressources. Non-recours fréquent autour de la naissance.',
+    actif: true,
+    montant: 'selon ressources (≈ 92–184 €/mois)',
+    regle: {
+      version: '1',
+      conditions: [
+        { type: 'enfant_age', min: 0, max: 2 },
+        { type: 'sejour_regulier' },
+      ],
+      ...SRC('2025-04-01', 'service-public.fr / CAF'),
+    },
+  },
+  {
     id: 'aah',
     nom: 'AAH (allocation aux adultes handicapés)',
     organisme: 'CAF / MDPH',
@@ -400,6 +420,37 @@ export const DISPOSITIFS: Dispositif[] = [
     actif: true,
     montant: 'demande / actualisation',
     regle: { version: '1', conditions: [], ...SRC('2025-01-01', 'service-public.fr') },
+  },
+  {
+    id: 'dalo',
+    nom: 'Droit au logement opposable (DALO)',
+    organisme: 'Préfecture — commission de médiation',
+    niveau: 'national',
+    determinant: 'logement',
+    couvert_par_mds: false,
+    description:
+      'Recours amiable des personnes mal logées ou sans logement (hébergement précaire, hôtel social, sans domicile, insalubrité, suroccupation, expulsion sans relogement). Exige une demande de logement social active.',
+    actif: true,
+    montant: 'recours (reconnaissance prioritaire au relogement)',
+    regle: { version: '1', conditions: [], ...SRC('2025-01-01', 'service-public.fr / DALO') },
+    evaluer: (p) => {
+      const precaire =
+        p.statutLogement === 'heberge' ||
+        p.hebergement === 'hotel_social' ||
+        p.hebergement === 'chu_chrs' ||
+        p.hebergement === 'sans_domicile';
+      if (precaire)
+        return {
+          verdict: 'a_verifier',
+          question:
+            'mal-logement / hébergement précaire — engager un recours DALO (vérifier d’abord une demande de logement social active)',
+        };
+      return {
+        verdict: 'non_eligible',
+        raison:
+          'logement stable — DALO sans objet (sauf insalubrité, suroccupation ou expulsion sans relogement à confirmer)',
+      };
+    },
   },
   {
     id: 'bourse_college_lycee',
@@ -699,6 +750,68 @@ export const DISPOSITIFS: Dispositif[] = [
       conditions: [{ type: 'age_demandeur', min: 65 }, { type: 'paris_3sur5' }],
       ...SRC('2025-01-01', 'CASVP'),
     },
+  },
+  {
+    id: 'apa',
+    nom: 'Allocation personnalisée d’autonomie (APA)',
+    organisme: 'Département de Paris',
+    niveau: 'paris',
+    determinant: 'solidarite',
+    couvert_par_mds: false,
+    description:
+      'Personnes de 60 ans et plus en perte d’autonomie (groupes GIR 1 à 4). À domicile (plan d’aide) ou en établissement.',
+    actif: true,
+    montant: 'selon le plan d’aide et le degré de perte d’autonomie',
+    regle: { version: '1', conditions: [], ...SRC('2025-01-01', 'service-public.fr / paris.fr') },
+    evaluer: (p) => {
+      if (p.ageDemandeur === undefined)
+        return {
+          verdict: 'a_verifier',
+          question: 'préciser l’âge — l’APA est ouverte dès 60 ans en cas de perte d’autonomie',
+        };
+      if (p.ageDemandeur < 60)
+        return { verdict: 'non_eligible', raison: `âge ${p.ageDemandeur} ans < 60 ans (APA)` };
+      return {
+        verdict: 'a_verifier',
+        question:
+          'perte d’autonomie (difficultés pour les actes du quotidien) ? Évaluer via la grille AGGIR — APA à domicile possible',
+      };
+    },
+  },
+  {
+    id: 'pedicure_domicile',
+    nom: 'Pédicure à domicile (Ville de Paris)',
+    organisme: 'CASVP',
+    niveau: 'paris',
+    determinant: 'sante',
+    couvert_par_mds: false,
+    description:
+      'Senior parisien à mobilité réduite : soins de pédicurie réalisés à domicile. Participation selon les ressources.',
+    actif: true,
+    montant: 'soins à domicile (participation selon ressources)',
+    regle: {
+      version: '1',
+      conditions: [{ type: 'age_demandeur', min: 65 }, { type: 'paris_3sur5' }],
+      ...SRC('2025-01-01', 'paris.fr / CASVP'),
+    },
+  },
+  {
+    id: 'fsl_equipement',
+    nom: 'Aide à l’équipement du logement (FSL)',
+    organisme: 'Ville de Paris — Fonds de solidarité pour le logement',
+    niveau: 'paris',
+    determinant: 'logement',
+    couvert_par_mds: false,
+    description:
+      'Entrée ou relogement récent : aide à l’équipement de première nécessité du logement (Fonds de solidarité pour le logement).',
+    actif: true,
+    montant: 'aide à l’équipement (selon barème FSL)',
+    regle: { version: '1', conditions: [], ...SRC('2025-01-01', 'paris.fr') },
+    evaluer: () => ({
+      verdict: 'a_verifier',
+      question:
+        'relogement ou entrée récente dans un logement ? Une aide FSL à l’équipement peut être demandée',
+    }),
   },
   {
     id: 'ticket_loisirs',
