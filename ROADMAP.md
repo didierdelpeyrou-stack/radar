@@ -19,14 +19,29 @@
 - [x] Base PJ (Annexe B, 24 jeux) + générateur de seed SQL (`npm run seed:sql`).
 - [x] App shell + vue détection 3 colonnes (✅🟡❌) avec sélecteur de personas.
 
+## ✅ Sprint 2 — wizard 5 étapes + PDF (livré, build vert)
+
+- [x] **Wizard diagnostic 5 étapes** (`src/wizard/`) avec barre de progression,
+      autosave local et **mode session éphémère** (aucune persistance si la case 1
+      du consentement est refusée).
+- [x] Étape 1 : bandeau urgences (numéros + conduites à tenir), consentement à
+      2 cases distinctes, mode de contact, besoin linguistique (rappel « ne jamais
+      utiliser un enfant comme interprète »).
+- [x] Étape 2 : les 7 blocs (Annexe C) avec info-bulles « pourquoi », calculs
+      exposés en direct : **taux d'effort** (seuil 30 %), **QF**, **alerte titre < 4 mois**.
+- [x] Étape 3 : récap latéral pour recopie, bouton mesdroitssociaux, grille de
+      saisie du résultat, checklist comptes connexes, rappel de posture (faire FAIRE).
+- [x] Étape 4 : vue détection 3 colonnes + filtre par déterminant (moteur réel).
+- [x] Étape 5 : restitution 3 colonnes, **plan priorisé** (urgence > impact mensuel >
+      effet d'entraînement), souhaite_engager jamais pré-coché, **PJ auto-générées**
+      (Annexe B), anti-surcharge (3 démarches dépliées).
+- [x] **PDF « Fiche récapitulative »** (`@react-pdf/renderer`, terminologie exacte,
+      chargé à la demande) — `src/pdf/FicheRecapitulative.tsx`.
+
 ## ⏳ Reste du MVP (sprint 1-2)
 
-- [ ] Auth Supabase + 4 rôles (admin/cad/ep/invite) + garde RLS côté client.
-- [ ] **Wizard diagnostic 5 étapes** : accueil/urgences/consentement (2 cases +
-      mode session éphémère), 7 blocs avec info-bulles « pourquoi », simulation MDS
-      (récap + grille de saisie), détection, restitution + plan d'action.
-- [ ] Calculs auto exposés dans l'UI : taux d'effort (seuil 30 %), QF, alerte titre < 4 mois.
-- [ ] **PDF « Fiche récapitulative »** (`@react-pdf/renderer`) — terminologie exacte.
+- [ ] Auth Supabase + 4 rôles (admin/cad/ep/invite) + garde RLS côté client +
+      persistance réelle des dossiers (aujourd'hui : brouillon local).
 - [ ] Export JSON / suppression dossier (double confirmation admin) ; page Mentions & registre.
 
 ## V1 (sprint 3-4)
